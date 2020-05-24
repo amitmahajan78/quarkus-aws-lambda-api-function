@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS Serverless Quarkus HTTP - org.thesaastech::quarkus-lambda-note
+Globals:
+  Api:
+    EndpointConfiguration: REGIONAL
+    BinaryMediaTypes:
+    - '*/*'
+    Cors:
+      AllowMethods: '''*'''
+      AllowHeaders: '''*'''
+      AllowOrigin: '''*'''
+    Auth:
+      DefaultAuthorizer: AWS_IAM
+Resources:
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+  NoteLambdaNativeFunctionNative:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: not.used.in.provided.runtimei
+      Runtime: provided
+      CodeUri: s3://quarkuslabdabucket/39b3d3fd0e9cf62eca65a308ed5b96ad
+      MemorySize: 512
+      Policies:
+      - AWSLambdaBasicExecutionRole
+      - AmazonDynamoDBFullAccess
+      Timeout: 20
+      Environment:
+        Variables:
+          DISABLE_SIGNAL_HANDLERS: true
+          DB_TABLE_NAME: dev-native-notes
+      Events:
+        CreateNote:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayApi
+            Path: /notes
+            Method: POST
+        GetNote:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayApi
+            Path: /notes/{noteId}
+            Method: GET
+        GetAllNote:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayApi
+            Path: /note
+            Method: GET
+        DeleteNote:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayApi
+            Path: /notes/{noteId}
+            Method: DELETE
+Outputs:
+  ApiUrl:
+    Description: URL for application
+    Value:
+      Fn::Sub: https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/dev
+    Export:
+      Name: NoteLambdaNativeApi
